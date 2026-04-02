@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Register</title>
+</head>
+<body>
+
+<link rel="stylesheet" href="css/style.css">
+
+<div class="container">
+    <h2>Register</h2>
+
+    <input id="username" placeholder="Username">
+    <input id="password" type="password" placeholder="Password">
+
+    <button onclick="register()">Register</button>
+
+    <p id="msg"></p>
+
+    <p><a href="login.html" style="color:white;">Login</a></p>
+</div>
+<script>
+async function register() {
+    const res = await fetch("/auth/register", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+            username: document.getElementById("username").value,
+            password: document.getElementById("password").value
+        })
+    });
+
+    const text = await res.text();
+    document.getElementById("msg").innerText = text;
+}
+</script>
+
+</body>
+</html>

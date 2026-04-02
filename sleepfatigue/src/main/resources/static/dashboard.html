@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+<div class="dashboard">
+    <h1>Sleep Fatigue Dashboard</h1>
+
+    <div id="cards"></div>
+
+    <h3>History</h3>
+    <ul id="history"></ul>
+</div>
+
+<canvas id="fatigueChart" style="max-width:600px; height:250px;"></canvas>
+
+<script>
+let chart;
+let labels = [];
+let fatigueData = [];
+
+function initChart() {
+    const ctx = document.getElementById("fatigueChart").getContext("2d");
+
+    chart = new Chart(ctx, {
+        type: "line",
+        data: {
+            labels: labels,
+            datasets: [{
+                label: "Fatigue Score",
+                data: fatigueData,
+                borderColor: "#00e5ff",
+                borderWidth: 2,
+                tension: 0.4,   // 👈 smooth curve
+                fill: false,
+                pointRadius: 3
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    labels: { color: "white" }
+                }
+            },
+            scales: {
+                x: {
+                    ticks: { color: "white" }
+                },
+                y: {
+                    beginAtZero: true,
+                    ticks: { color: "white" }
+                }
+            }
+        }
+    });
+}
+
+async function fetchData() {
+    const res = await fetch("/fatigue/live");
+    const data = await res.json();
+
+    let color = "green";
+    if (data.current.fatigue_score > 70) color = "red";
+    else if (data.current.fatigue_score > 40) color = "orange";
+
+    document.getElementById("cards").innerHTML = `
+        <div class="card">Sleep<br>${data.current.sleep}</div>
+        <div class="card">Heart<br>${data.current.heart}</div>
+        <div class="card">Activity<br>${data.current.activity}</div>
+        <div class="card" style="color:${color}">
+            Fatigue<br>${data.current.fatigue_score}
+        </div>
+    `;
+
+    // Update chart data
+    if (labels.length > 6) {
+        labels.shift();
+        fatigueData.shift();
+    }
+
+    labels.push(new Date().toLocaleTimeString());
+    fatigueData.push(data.current.fatigue_score);
+
+    chart.update();
+
+    // History list
+    let historyHTML = "";
+    data.history.forEach(item => {
+        historyHTML += `<li>Fatigue: ${item.fatigue_score}</li>`;
+    });
+
+    document.getElementById("history").innerHTML = historyHTML;
+}
+
+// Initialize chart
+initChart();
+
+// Update every 2 sec
+setInterval(fetchData, 2000);
+</script>
+
+</body>
+</html>
